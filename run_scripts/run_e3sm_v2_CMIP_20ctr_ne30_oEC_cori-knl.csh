@@ -23,7 +23,7 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = E3SM_v2_UMRad_CMIP6_20TRS
+set job_name       = E3SM_v2_alpha_CMIP6_20TRS
 set compset        = A_WCYCL20TRS_CMIP6
 set resolution     = ne30_oECv3_ICG
 set machine        = cori-knl
@@ -57,7 +57,7 @@ set run_refcase = 20171228.beta3rc13_1850.ne30_oECv3_ICG.edison
 set run_refdate = 0331-01-01
 
 ### DIRECTORIES
-set code_root_dir               = ~/model/E3SM_v2_UMRad
+set code_root_dir               = ~/model_orig/E3SM_v2_alpha
 set e3sm_simulations_dir        = /global/cscratch1/sd/$USER/E3SM_simulations
 set case_build_dir              = ${e3sm_simulations_dir}/${case_name}/build
 set case_run_dir                = ${e3sm_simulations_dir}/${case_name}/run
