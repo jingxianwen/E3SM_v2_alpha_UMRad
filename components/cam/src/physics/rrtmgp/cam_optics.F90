@@ -5,6 +5,7 @@ module cam_optics
    use radiation_state, only: nlev_rad, ktop, kbot
    use radiation_utils, only: handle_error
    use radconstants, only: nswbands, nlwbands
+   use cam_logfile,     only: iulog
 
    implicit none
    private
@@ -765,6 +766,10 @@ contains
             optics_out%tau(icol,ilay,:) = reordered(optics_out%tau(icol,ilay,:), map_rrtmg_to_rrtmgp_swbands)
             optics_out%ssa(icol,ilay,:) = reordered(optics_out%ssa(icol,ilay,:), map_rrtmg_to_rrtmgp_swbands)
             optics_out%g(icol,ilay,:) = reordered(optics_out%g(icol,ilay,:), map_rrtmg_to_rrtmgp_swbands)
+          ! test ssa range. xianwen.
+          !  if (maxval(optics_out%ssa(icol,ilay,:)) .gt. 1._r8) then
+          !      write(iulog,*) "xianwen test aerosol ssa range:",maxval(optics_out%ssa(icol,ilay,:))
+          !  end if
          end do
       end do
 
