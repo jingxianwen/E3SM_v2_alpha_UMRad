@@ -23,9 +23,9 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = E3SM_v2_alpha_CMIP6_20TRS_RRTMG_debug
-set compset        = A_WCYCL20TRS_CMIP6
-set resolution     = ne30_oECv3_ICG
+set job_name       = E3SM_v2_alpha_AMIP_RRTMG_COSP
+set compset        = FC5AV1C-04P2
+set resolution     = ne30_ne30
 set machine        = cori-knl
 set walltime       = 00:30:00
 setenv project       m2136
@@ -36,7 +36,7 @@ set e3sm_tag       = maint-1.0   # github tag or hash
 set tag_name       = 20180420    # code sub-directory name
 
 ### CASE_NAME
-set case_name = ${job_name}.ne30_oEC.cori-knl
+set case_name = ${job_name}.ne30_ne30.cori-knl
 
 ### BUILD OPTIONS
 set debug_compile  = false
@@ -67,7 +67,7 @@ set short_term_archive_root_dir = ${e3sm_simulations_dir}/${case_name}/archive
 
 ## 5-day test simulation
 set stop_units       = nhours
-set stop_num         = 12
+set stop_num         = 3
 set restart_units    = $stop_units
 set restart_num      = $stop_num
 
@@ -82,6 +82,9 @@ set do_short_term_archiving      = false
 
 ### SIMULATION OPTIONS
 set start_date                   = 2000-01-01
+
+### Radiation option (Xianwen)
+set rad_schm = RRTMG  #valid values: RRTMG or RRTMGP
 
 ### COUPLER HISTORY FILES
 set do_cpl_hist    = true
@@ -827,7 +830,21 @@ else
 endif
 
 ## Chris Golaz: switch to rrtmgp
-#$xmlchange_exe --append CAM_CONFIG_OPTS='-rad rrtmgp'
+if ( $rad_schm == RRTMGP ) then
+  $xmlchange_exe --append CAM_CONFIG_OPTS='-rad rrtmgp'
+  #ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMGP_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc  
+else if ($rad_schm == RRTMG) then
+  #ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMG_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc  
+else 
+  e3sm_newline
+  e3sm_print 'ERROR: rad_schm should be either RRTMG or RRTMGP'
+  e3sm_newline
+  exit 55
+endif
+
+## link files of frequently used settings to case_scripts directory (Xianwen)
+ln -s $code_root_dir/run_scripts/branch_run.sh $case_scripts_dir/
+ln -s $code_root_dir/run_scripts/freq_settings.sh $case_scripts_dir/
 
 #===========================
 # SET THE PARTITION OF NODES
@@ -926,16 +943,15 @@ $xmlchange_exe --id DEBUG --val `uppercase $debug_compile`
 # NOTE: $atm_output_freq and $records_per_atm_output_file are so commonly used, that they are set in the options at the top of this script.
 
 cat <<EOF >> user_nl_cam
- nhtfrq = -1
+ nhtfrq = -24
  mfilt  = 1
  avgflag_pertape = 'A'
- fincl1 = 'FLDSC'
  empty_htapes = .false.
 EOF
 
-#cat <<EOF >> user_nl_clm
-# check_finidat_year_consistency = .false.
-#EOF
+cat <<EOF >> user_nl_clm
+ check_finidat_year_consistency = .false.
+EOF
 
 ### NOTES ON COMMON NAMELIST OPTIONS ###
 
@@ -965,6 +981,8 @@ if ( `lowercase $old_executable` == false ) then
   e3sm_newline
   e3sm_print '-------- Finished Build --------'
   e3sm_newline
+
+
 else if ( `lowercase $old_executable` == true ) then
   if ( -x $case_build_dir/$e3sm_exe ) then       #use executable previously generated for this case_name.
     e3sm_print 'Skipping build because $old_executable='$old_executable
