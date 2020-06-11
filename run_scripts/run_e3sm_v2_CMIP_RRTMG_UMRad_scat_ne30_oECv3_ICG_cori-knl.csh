@@ -23,11 +23,11 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = E3SM_v2_alpha_AMIP_UMRad
-set compset        = FC5AV1C-04P2
-set resolution     = ne30_ne30
+set job_name       = E3SM_v2_alpha_CMIP6_20TRS_RRTMG_UMRad_startover
+set compset        = A_WCYCL20TRS_CMIP6
+set resolution     = ne30_oECv3_ICG
 set machine        = cori-knl
-set walltime       = 00:30
+set walltime       = 12:00:00
 setenv project       m2136
 
 ### SOURCE CODE OPTIONS
@@ -36,7 +36,7 @@ set e3sm_tag       = maint-1.0   # github tag or hash
 set tag_name       = 20180420    # code sub-directory name
 
 ### CASE_NAME
-set case_name = ${job_name}.ne30_ne30.cori-knl
+set case_name = ${job_name}.ne30_oEC.cori-knl
 
 ### BUILD OPTIONS
 set debug_compile  = false
@@ -45,7 +45,8 @@ set old_executable = false      # build executable is set to 'false', reuse
 
 ### SUBMIT OPTIONS
 set submit_run       = true     # submit experiment after successful build
-set debug_queue      = true     # submit to debug queue?
+set debug_queue      = false     # submit to debug queue?
+set job_queue        = 'low'      # regular, low, flex, debug
 
 ### PROCESSOR CONFIGURATION
 set processor_config = L        # PE count: S (39 nodes), L (285 nodes)
@@ -57,7 +58,7 @@ set run_refcase = 20171228.beta3rc13_1850.ne30_oECv3_ICG.edison
 set run_refdate = 0331-01-01
 
 ### DIRECTORIES
-set code_root_dir               = ~/model_orig/E3SM_v2_alpha
+set code_root_dir               = ~/model_orig/E3SM_v2_alpha_startover
 set e3sm_simulations_dir        = /global/cscratch1/sd/$USER/E3SM_simulations
 set case_build_dir              = ${e3sm_simulations_dir}/${case_name}/build
 set case_run_dir                = ${e3sm_simulations_dir}/${case_name}/run
@@ -66,22 +67,25 @@ set short_term_archive_root_dir = ${e3sm_simulations_dir}/${case_name}/archive
 ### LENGTH OF SIMULATION, RESTARTS, AND ARCHIVING
 
 ## 5-day test simulation
-set stop_units       = ndays
-set stop_num         = 1
-set restart_units    = $stop_units
-set restart_num      = $stop_num
-
-## Multi-year simulation
-#set stop_units       = nyears
-#set stop_num         = 10
-#set restart_units    = nyears
+#set stop_units       = ndays
+#set stop_num         = 2
+#set restart_units    = $stop_units
 #set restart_num      = 1
 
-set num_resubmits    = 0
+## Multi-year simulation
+set stop_units       = nyears
+set stop_num         = 1
+set restart_units    = nyears
+set restart_num      = 1
+
+set num_resubmits    = 10
 set do_short_term_archiving      = false
 
 ### SIMULATION OPTIONS
-set start_date                   = 0001-01-01
+set start_date                   = 2000-01-01
+
+### Radiation option (Xianwen)
+set rad_schm = RRTMG  #valid values: RRTMG or RRTMGP
 
 ### COUPLER HISTORY FILES
 set do_cpl_hist    = true
@@ -826,6 +830,23 @@ else
   $xmlchange_exe --id CAM_CONFIG_OPTS --append --val='-cosp'
 endif
 
+## Chris Golaz: switch to rrtmgp (Xianwen add the selection by rad_schm)
+if ( $rad_schm == RRTMGP ) then
+  $xmlchange_exe --append CAM_CONFIG_OPTS='-rad rrtmgp'
+  #ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMGP_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc
+else if ($rad_schm == RRTMG) then
+  #ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMG_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc
+else
+  e3sm_newline
+  e3sm_print 'ERROR: rad_schm should be either RRTMG or RRTMGP'
+  e3sm_newline
+  exit 55
+endif
+
+## link files of frequently used settings to case_scripts directory (Xianwen)
+ln -s $code_root_dir/run_scripts/branch_run.sh $case_scripts_dir/
+ln -s $code_root_dir/run_scripts/freq_settings.sh $case_scripts_dir/
+
 #===========================
 # SET THE PARTITION OF NODES
 #===========================
@@ -836,6 +857,8 @@ if ( `lowercase $debug_queue` == true ) then
   else if ($machine != sandiatoss3 && $machine != bebop && $machine != blues) then
     $xmlchange_exe --id JOB_QUEUE --val 'debug'
   endif
+else 
+  $xmlchange_exe --force --id JOB_QUEUE --val $job_queue
 endif
 
 #============================================
@@ -923,10 +946,15 @@ $xmlchange_exe --id DEBUG --val `uppercase $debug_compile`
 # NOTE: $atm_output_freq and $records_per_atm_output_file are so commonly used, that they are set in the options at the top of this script.
 
 cat <<EOF >> user_nl_cam
- nhtfrq =   -24
+ nhtfrq = 0
  mfilt  = 1
  avgflag_pertape = 'A'
  empty_htapes = .false.
+ fincl1 = 'FLDSC'
+ flag_mc6=.true.
+ flag_emis=.false.
+ flag_rtr2=.true.
+ flag_scat=.true.
 EOF
 
 cat <<EOF >> user_nl_clm
@@ -961,6 +989,7 @@ if ( `lowercase $old_executable` == false ) then
   e3sm_newline
   e3sm_print '-------- Finished Build --------'
   e3sm_newline
+
 else if ( `lowercase $old_executable` == true ) then
   if ( -x $case_build_dir/$e3sm_exe ) then       #use executable previously generated for this case_name.
     e3sm_print 'Skipping build because $old_executable='$old_executable

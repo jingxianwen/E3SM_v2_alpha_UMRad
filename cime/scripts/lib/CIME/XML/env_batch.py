@@ -34,6 +34,7 @@ class EnvBatch(EnvBase):
         val = None
 
         if item == "JOB_QUEUE":
+            #print(self._get_all_queue_names())
             expect(value in self._get_all_queue_names() or ignore_type,
                    "Unknown Job Queue specified use --force to set")
 
