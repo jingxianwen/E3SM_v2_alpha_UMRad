@@ -23,9 +23,9 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = CMIP6_RRTMG_UMRad_Scat
-set compset        = A_WCYCL20TRS_CMIP6
-set resolution     = ne30_oECv3_ICG
+set job_name       = E3SM_v2_alpha_AMIP_RRTMG_UMRad_startover
+set compset        = FC5AV1C-04P2
+set resolution     = ne30_ne30
 set machine        = cori-knl
 set walltime       = 00:30:00
 setenv project       m2136
@@ -36,7 +36,7 @@ set e3sm_tag       = maint-1.0   # github tag or hash
 set tag_name       = 20180420    # code sub-directory name
 
 ### CASE_NAME
-set case_name = ${job_name}.ne30_oEC.cori-knl
+set case_name = ${job_name}.ne30_ne30.cori-knl
 
 ### BUILD OPTIONS
 set debug_compile  = false
@@ -57,7 +57,7 @@ set run_refcase = 20171228.beta3rc13_1850.ne30_oECv3_ICG.edison
 set run_refdate = 0331-01-01
 
 ### DIRECTORIES
-set code_root_dir               = ~/model/E3SM_v2_alpha_UMRad
+set code_root_dir               = ~/model_orig/E3SM_v2_alpha_startover
 set e3sm_simulations_dir        = /global/cscratch1/sd/$USER/E3SM_simulations
 set case_build_dir              = ${e3sm_simulations_dir}/${case_name}/build
 set case_run_dir                = ${e3sm_simulations_dir}/${case_name}/run
@@ -67,9 +67,9 @@ set short_term_archive_root_dir = ${e3sm_simulations_dir}/${case_name}/archive
 
 ## 5-day test simulation
 set stop_units       = ndays
-set stop_num         = 1
+set stop_num         = 2
 set restart_units    = $stop_units
-set restart_num      = $stop_num
+set restart_num      = 1
 
 ## Multi-year simulation
 #set stop_units       = nyears
@@ -81,7 +81,7 @@ set num_resubmits    = 0
 set do_short_term_archiving      = false
 
 ### SIMULATION OPTIONS
-set start_date                   = 2020-01-01
+set start_date                   = 2000-01-01
 
 ### Radiation option (Xianwen)
 set rad_schm = RRTMG  #valid values: RRTMG or RRTMGP
@@ -832,10 +832,10 @@ endif
 ## Chris Golaz: switch to rrtmgp
 if ( $rad_schm == RRTMGP ) then
   $xmlchange_exe --append CAM_CONFIG_OPTS='-rad rrtmgp'
-  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMGP_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc
+  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMGP_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc  
 else if ($rad_schm == RRTMG) then
-  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMG_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc
-else
+  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMG_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc  
+else 
   e3sm_newline
   e3sm_print 'ERROR: rad_schm should be either RRTMG or RRTMGP'
   e3sm_newline
@@ -943,34 +943,19 @@ $xmlchange_exe --id DEBUG --val `uppercase $debug_compile`
 # NOTE: $atm_output_freq and $records_per_atm_output_file are so commonly used, that they are set in the options at the top of this script.
 
 cat <<EOF >> user_nl_cam
- nhtfrq = -1
+ nhtfrq = -24
  mfilt  = 1
  avgflag_pertape = 'A'
- fincl1 = 'FLDSC'
  empty_htapes = .false.
- scenario_ghg = 'FIXED'
- flag_emis = .false.
- flag_scat = .true. 
- flag_rtr2 = .true.
- flag_mc6  = .true.
- srf_emis_type = 'CYCLICAL'
- srf_emis_cycle_yr = 2010
- ext_frc_type = 'CYCLICAL'
- ext_frc_cycle_yr = 2010
- prescribed_volcaero_type = 'CYCLICAL'
- prescribed_volcaero_cycle_yr = 2010
- linoz_data_type = 'CYCLICAL'
- linoz_data_cycle_yr = 2010
- !tracer_cnst_type = 'CYCLICAL'
- !tracer_cnst_cycle_yr = 2010
- chlorine_loading_type = 'FIXED'
- chlorine_loading_fixed_ymd = 20100701
- chlorine_loading_fixed_tod = 0
+ flag_mc6=.true.
+ flag_emis=.false.
+ flag_rtr2=.false.
+ flag_scat=.false.
 EOF
 
-#cat <<EOF >> user_nl_clm
-# check_finidat_year_consistency = .false.
-#EOF
+cat <<EOF >> user_nl_clm
+ check_finidat_year_consistency = .false.
+EOF
 
 ### NOTES ON COMMON NAMELIST OPTIONS ###
 
@@ -1000,6 +985,8 @@ if ( `lowercase $old_executable` == false ) then
   e3sm_newline
   e3sm_print '-------- Finished Build --------'
   e3sm_newline
+
+
 else if ( `lowercase $old_executable` == true ) then
   if ( -x $case_build_dir/$e3sm_exe ) then       #use executable previously generated for this case_name.
     e3sm_print 'Skipping build because $old_executable='$old_executable

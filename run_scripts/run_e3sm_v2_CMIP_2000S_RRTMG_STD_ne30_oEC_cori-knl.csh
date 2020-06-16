@@ -23,11 +23,11 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = CMIP6_RRTMG_UMRad_Scat
-set compset        = A_WCYCL20TRS_CMIP6
+set job_name       = CMIP6_2000S_RRTMG_STD_Scat
+set compset        = A_WCYCL2000S
 set resolution     = ne30_oECv3_ICG
 set machine        = cori-knl
-set walltime       = 00:30:00
+set walltime       = 12:00:00
 setenv project       m2136
 
 ### SOURCE CODE OPTIONS
@@ -45,7 +45,7 @@ set old_executable = false      # build executable is set to 'false', reuse
 
 ### SUBMIT OPTIONS
 set submit_run       = true     # submit experiment after successful build
-set debug_queue      = true     # submit to debug queue?
+set debug_queue      = false    # submit to debug queue?
 
 ### PROCESSOR CONFIGURATION
 set processor_config = L        # PE count: S (39 nodes), L (285 nodes)
@@ -57,7 +57,7 @@ set run_refcase = 20171228.beta3rc13_1850.ne30_oECv3_ICG.edison
 set run_refdate = 0331-01-01
 
 ### DIRECTORIES
-set code_root_dir               = ~/model/E3SM_v2_alpha_UMRad
+set code_root_dir               = ~/model/E3SM_v2_alpha
 set e3sm_simulations_dir        = /global/cscratch1/sd/$USER/E3SM_simulations
 set case_build_dir              = ${e3sm_simulations_dir}/${case_name}/build
 set case_run_dir                = ${e3sm_simulations_dir}/${case_name}/run
@@ -66,22 +66,22 @@ set short_term_archive_root_dir = ${e3sm_simulations_dir}/${case_name}/archive
 ### LENGTH OF SIMULATION, RESTARTS, AND ARCHIVING
 
 ## 5-day test simulation
-set stop_units       = ndays
-set stop_num         = 1
-set restart_units    = $stop_units
-set restart_num      = $stop_num
+#set stop_units       = ndays
+#set stop_num         = 1
+#set restart_units    = $stop_units
+#set restart_num      = $stop_num
 
 ## Multi-year simulation
-#set stop_units       = nyears
-#set stop_num         = 1
-#set restart_units    = nyears
-#set restart_num      = 1
+set stop_units       = nyears
+set stop_num         = 1
+set restart_units    = nyears
+set restart_num      = 1
 
-set num_resubmits    = 0
+set num_resubmits    = 20
 set do_short_term_archiving      = false
 
 ### SIMULATION OPTIONS
-set start_date                   = 2020-01-01
+set start_date                   = 2000-01-01
 
 ### Radiation option (Xianwen)
 set rad_schm = RRTMG  #valid values: RRTMG or RRTMGP
@@ -948,24 +948,24 @@ cat <<EOF >> user_nl_cam
  avgflag_pertape = 'A'
  fincl1 = 'FLDSC'
  empty_htapes = .false.
- scenario_ghg = 'FIXED'
  flag_emis = .false.
- flag_scat = .true. 
- flag_rtr2 = .true.
- flag_mc6  = .true.
- srf_emis_type = 'CYCLICAL'
- srf_emis_cycle_yr = 2010
- ext_frc_type = 'CYCLICAL'
- ext_frc_cycle_yr = 2010
- prescribed_volcaero_type = 'CYCLICAL'
- prescribed_volcaero_cycle_yr = 2010
- linoz_data_type = 'CYCLICAL'
- linoz_data_cycle_yr = 2010
+ flag_scat = .false. 
+ flag_rtr2 = .false.
+ flag_mc6  = .false.
+ !scenario_ghg = 'FIXED'
+ !srf_emis_type = 'CYCLICAL'
+ !srf_emis_cycle_yr = 2010
+ !ext_frc_type = 'CYCLICAL'
+ !ext_frc_cycle_yr = 2010
+ !prescribed_volcaero_type = 'CYCLICAL'
+ !prescribed_volcaero_cycle_yr = 2010
+ !linoz_data_type = 'CYCLICAL'
+ !linoz_data_cycle_yr = 2010
  !tracer_cnst_type = 'CYCLICAL'
  !tracer_cnst_cycle_yr = 2010
- chlorine_loading_type = 'FIXED'
- chlorine_loading_fixed_ymd = 20100701
- chlorine_loading_fixed_tod = 0
+ !chlorine_loading_type = 'FIXED'
+ !chlorine_loading_fixed_ymd = 20100701
+ !chlorine_loading_fixed_tod = 0
 EOF
 
 #cat <<EOF >> user_nl_clm
