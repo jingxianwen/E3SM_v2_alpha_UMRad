@@ -54,7 +54,7 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
                         ! U-MICH team add input -->
                         rtr2_flag, ssac_lw, asmc_lw, surface_emis, &  
                         ! U-MICH team add input -->
-                        spec_lwdn )  ! U-MICH team add
+                        flds_spec, fldsc_spec, flns_spec, flnsc_spec, flut_spec, flutc_spec )  ! U-MICH team add
 ! <---
 
 !-----------------------------------------------------------------------
@@ -99,6 +99,7 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
    real(r8), intent(out) :: fldsc(pcols)         ! Down longwave clear flux at surface
    real(r8), intent(out) :: fcnl(pcols,pverp)    ! clear sky net flux at interfaces
    real(r8), intent(out) :: fnl(pcols,pverp)     ! net flux at interfaces
+
 
    real(r8), pointer, dimension(:,:,:) :: lu ! longwave spectral flux up
    real(r8), pointer, dimension(:,:,:) :: ld ! longwave spectral flux down
@@ -157,9 +158,21 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
    real(r8), intent(in)  :: ssac_lw (nbndlw,pcols,pver)   ! Cloud single scattering albedo
    real(r8), intent(in)  :: asmc_lw(nbndlw,pcols,pver)    ! Cloud asymmetric factor
    real(r8), intent(in)  :: surface_emis(pcols,nbndlw)    ! surface emissivity
-   real(r8), intent(out) :: spec_lwdn(nbndlw,pcols)       ! downward LW spectral flux at the surface
+   !real(r8), intent(out) :: spec_lwdn(nbndlw,pcols)       ! downward LW spectral flux at the surface
+   !xianwen added
+   real(r8), intent(out) :: flds_spec(nbndlw,pcols)          ! Spectral Down flux at surface
+   real(r8), intent(out) :: fldsc_spec(nbndlw,pcols)         ! Spectral Down clear-sky flux at surface
+   real(r8), intent(out) :: flns_spec(nbndlw,pcols)          ! Spectral Surface cooling flux
+   real(r8), intent(out) :: flnsc_spec(nbndlw,pcols)         ! Spectral Clear sky surface cooing
+   real(r8), intent(out) :: flut_spec(nbndlw,pcols)          ! Spectral Upward flux at top of model
+   real(r8), intent(out) :: flutc_spec(nbndlw,pcols)         ! Spectral Net clear sky outgoing flux
+   !<-
    real(r8) :: ssac_stolw(nsubclw, pcols, rrtmg_levs-1)   ! Cloud single scattering albedo (mcica - optional)
    real(r8) :: asmc_stolw(nsubclw, pcols, rrtmg_levs-1)   ! Cloud asymmetric factor (mcica - optional)
+   real(r8) lwuclflxs(nbndlw,pcols,pverp+1)  ! Longwave clr-sky spectral flux up
+   real(r8) lwdclflxs(nbndlw,pcols,pverp+1)  ! Longwave clr-sky spectral flux down
+   real(r8), pointer, dimension(:,:,:) :: luc ! longwave clr-sky spectral flux up
+   real(r8), pointer, dimension(:,:,:) :: ldc ! longwave clr-sky spectral flux down
    ! <---
    !-----------------------------------------------------------------------
 
@@ -257,6 +270,8 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
    if (associated(lu)) lu(1:ncol,:,:) = 0.0_r8
    if (associated(ld)) ld(1:ncol,:,:) = 0.0_r8
 
+   if (associated(luc)) luc(1:ncol,:,:) = 0.0_r8
+   if (associated(ldc)) ldc(1:ncol,:,:) = 0.0_r8
 !! U-MICH team comment -->
 !!   call rrtmg_lw(lchnk  ,ncol ,rrtmg_levs    ,icld    ,                 &
 !!        r_state%pmidmb  ,r_state%pintmb  ,r_state%tlay    ,r_state%tlev    ,tsfc    ,r_state%h2ovmr, &
@@ -276,9 +291,9 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
         cld_stolw,tauc_stolw,ssac_stolw,asmc_stolw,cicewp_stolw,cliqwp_stolw ,rei, rel, &
         taua_lw, &
         uflx    ,dflx    ,hr      ,uflxc   ,dflxc   ,hrc, &
-        lwuflxs, lwdflxs)
+        lwuflxs, lwdflxs, lwuclflxs, lwdclflxs)
        
-        spec_lwdn(:,:) = lwdflxs(:,:ncol,1) ! U-MICH team add spec_lwdn output 
+        !spec_lwdn(:,:) = lwdflxs(:,:ncol,1) ! U-MICH team add spec_lwdn output 
 ! <---
    !
    !----------------------------------------------------------------------
@@ -297,6 +312,15 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
    flntc(:ncol) = uflxc(:ncol,rrtmg_levs) - dflxc(:ncol,rrtmg_levs)
    flut(:ncol)  = uflx (:ncol,rrtmg_levs)
    flutc(:ncol) = uflxc(:ncol,rrtmg_levs)
+
+   ! xianwen added ->
+   flds_spec(1:nbndlw,1:ncol)=lwdflxs(1:nbndlw,1:ncol,1)
+   fldsc_spec(1:nbndlw,1:ncol)=lwdclflxs(1:nbndlw,1:ncol,1)
+   flns_spec(1:nbndlw,1:ncol)=lwuflxs(1:nbndlw,1:ncol,1)-lwdflxs(1:nbndlw,1:ncol,1)
+   flnsc_spec(1:nbndlw,1:ncol)=lwuclflxs(1:nbndlw,1:ncol,1)-lwdclflxs(1:nbndlw,1:ncol,1)
+   flut_spec(1:nbndlw,1:ncol)=lwuflxs(1:nbndlw,1:ncol,rrtmg_levs)
+   flutc_spec(1:nbndlw,1:ncol)=lwuclflxs(1:nbndlw,1:ncol,rrtmg_levs)
+   !<-
 
    !
    ! Reverse vertical indexing here for CAM arrays to go from top to bottom.
@@ -332,6 +356,25 @@ subroutine rad_rrtmg_lw(lchnk   ,ncol      ,rrtmg_levs,r_state,       &
       qrl(:ncol,:ntoplw-1) = 0._r8
       qrlc(:ncol,:ntoplw-1) = 0._r8
    end if
+
+    ! check if NaN, xianwen, 2020.06.30 -->
+    !do k=1,pver
+    !   do i=1,ncol
+    !      if (isnan(qrl(i,k))) then
+    !           write(iulog,*)"Xianwen checkpoint: NaN found in qrl due to radheat!"
+    !           write(iulog,*)"Xianwen checkpoint: qrl(colum)=",qrl(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: qrlc(colum)=",qrlc(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: hr(colum)=",hr(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: hrc(colum)=",hrc(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: ful(colum)=",ful(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: fdl(colum)=",fdl(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: fsul(colum)=",fsul(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: fsdl(colum)=",fsdl(i,:)
+    !           call endrun('Xianwen checkpoint: stop model run from radlw.')
+    !      end if
+    !   end do
+    !end do
+    !!<-- end check
 
    ! Pass spectral fluxes, reverse layering
    ! order=(/3,1,2/) maps the first index of lwuflxs to the third index of lu.

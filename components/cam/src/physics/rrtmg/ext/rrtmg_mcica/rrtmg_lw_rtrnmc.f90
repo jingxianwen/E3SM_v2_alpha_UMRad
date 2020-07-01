@@ -26,6 +26,9 @@
       use rrlw_tbl, only: tblint, bpade, tau_tbl, exp_tbl, tfn_tbl
       use rrlw_vsn, only: hvrrtc, hnamrtc
 
+      use cam_logfile,       only: iulog
+      use cam_abortutils,        only: endrun
+      
       implicit none
 
       contains
@@ -35,7 +38,8 @@
                         cldfmc, taucmc, planklay, planklev, plankbnd, &
                         pwvcm, fracs, taut, &
                         totuflux, totdflux, fnet, htr, &
-                        totuclfl, totdclfl, fnetc, htrc, totufluxs, totdfluxs ) 
+                        totuclfl, totdclfl, fnetc, htrc, &
+                        totufluxs, totdfluxs, totuclfls, totdclfls ) 
 !-----------------------------------------------------------------------------
 !
 !  Original version:   E. J. Mlawer, et al. RRTM_V3.0
@@ -109,7 +113,12 @@
                                                         !    Dimensions: (nbndlw, 0:nlayers)
       real(kind=r8), intent(out) :: totdfluxs(:,0:)     ! downward longwave flux spectral (w/m2)
                                                         !    Dimensions: (nbndlw, 0:nlayers)
-
+! xianwen added ->
+      real(kind=r8), intent(out) :: totuclfls(:,0:)     ! upward longwave flux spectral (w/m2)
+                                                        !    Dimensions: (nbndlw, 0:nlayers)
+      real(kind=r8), intent(out) :: totdclfls(:,0:)     ! downward longwave flux spectral (w/m2)
+                                                        !    Dimensions: (nbndlw, 0:nlayers)
+! <-
 ! ----- Local -----
 ! Declarations for radiative transfer
       real(kind=r8) :: abscld(nlayers,ngptlw)
@@ -473,6 +482,10 @@
             totdclfl(lev) = totdclfl(lev) + dclfl(lev) * delwave(iband)
             totufluxs(iband,lev) = uflux(lev) * delwave(iband)
             totdfluxs(iband,lev) = dflux(lev) * delwave(iband)
+            !xianwen added->
+            totuclfls(iband,lev) = uclfl(lev) * delwave(iband)
+            totdclfls(iband,lev) = dclfl(lev) * delwave(iband)
+            ! <-
          enddo
 
 ! End spectral band loop
@@ -483,6 +496,10 @@
       totdflux(0) = totdflux(0) * fluxfac
       totufluxs(:,0) = totufluxs(:,0) * fluxfac
       totdfluxs(:,0) = totdfluxs(:,0) * fluxfac
+      !xianwen added ->
+      totuclfls(:,0) = totuclfls(:,0) * fluxfac
+      totdclfls(:,0) = totdclfls(:,0) * fluxfac
+      !<-
       fnet(0) = totuflux(0) - totdflux(0)
       totuclfl(0) = totuclfl(0) * fluxfac
       totdclfl(0) = totdclfl(0) * fluxfac
@@ -494,6 +511,10 @@
          totdflux(lev) = totdflux(lev) * fluxfac
          totufluxs(:,lev) = totufluxs(:,lev) * fluxfac
          totdfluxs(:,lev) = totdfluxs(:,lev) * fluxfac
+         !xianwen added ->
+         totuclfls(:,lev) = totuclfls(:,lev) * fluxfac
+         totdclfls(:,lev) = totdclfls(:,lev) * fluxfac
+         !<-
          fnet(lev) = totuflux(lev) - totdflux(lev)
          totuclfl(lev) = totuclfl(lev) * fluxfac
          totdclfl(lev) = totdclfl(lev) * fluxfac
@@ -539,7 +560,10 @@
                               planklay, planklev, plankbnd, &
                               pwvcm, fracs, taut, &
                               totuflux, totdflux, fnet, htr, &
-                              totuclfl, totdclfl, fnetc, htrc, totufluxs, totdfluxs)
+                              totuclfl, totdclfl, fnetc, htrc, &
+                              totufluxs, totdfluxs, totuclfls, totdclfls)
+      use cam_logfile,       only: iulog
+      use cam_abortutils,        only: endrun
 ! ----- Input -----
       integer, intent(in) :: nlayers         ! total number of layers
       integer, intent(in) :: istart          ! beginning band of calculation
@@ -596,15 +620,20 @@
       real(kind=r8), intent(out) :: htrc(0:)          ! clear sky longwave heating rate (k/day)
                                                       !    Dimensions: (0:nlayers)
 ! U-MICH team Dec.18, 2019, add spectral flux -->
-      real(kind=r8), intent(out) :: totufluxs(:,0:)  ! upward longwave spectral flux (w/m2)
-                                                          !    Dimensions: (nbndlw,0:nlayers)
-      real(kind=r8), intent(out) :: totdfluxs(:,0:)  ! downward longwave spectral flux (W/m2)
-                                                          !    Dimensions: (nbndlw,0:nlayers)
+      real(kind=r8), intent(out) :: totufluxs(:,0:) ! upward longwave spectral flux (w/m2)
+                                                    !    Dimensions: (nbndlw,0:nlayers)
+      real(kind=r8), intent(out) :: totdfluxs(:,0:) ! downward longwave spectral flux (W/m2)
+                                                    !    Dimensions: (nbndlw,0:nlayers)
+      real(kind=r8), intent(out) :: totuclfls(:,0:) ! upward clear-sky longwave spectral flux (w/m2)
+                                                    !    Dimensions: (nbndlw,0:nlayers)
+      real(kind=r8), intent(out) :: totdclfls(:,0:) ! downward clear-sky longwave spectral flux (W/m2)
+                                                    !    Dimensions: (nbndlw,0:nlayers)
 !<--- 
 ! ----- Local -----
 ! Declarations for radiative transfer
       integer :: iband, lay, lev, ig   ! loop indices
       integer :: ibcnd
+      integer :: i,j
 
       real(kind=r8) :: wavenumlo, wavenumhi
       real(kind=r8) :: plkavg
@@ -670,6 +699,8 @@
       !>>> U-MICH team Dec.18, 2019, add spectral flux >>>
       totufluxs = 0.0_r8
       totdfluxs = 0.0_r8
+      totuclfls = 0.0_r8
+      totdclfls = 0.0_r8
       !<<< U-MICH team Dec.18, 2019, add spectral flux <<<
 
       totuclfl = 0.0_r8
@@ -802,6 +833,25 @@
             !<<< U-MICH team Dec.18, 2019, add spectral flux <<<
          enddo
 
+       ! check if NaN, xianwen, 2020.06.30 -->
+         !do lev=1,nlayers
+         !  if (isnan(totuflux(lev))) then
+         !    write(iulog,*)"Xianwen : NaN found in radiative transfer, &
+         !    ig=",ig
+         !    write(iulog,*)"Xianwen : totuflux(colum)=",totuflux(:)
+         !    write(iulog,*)"Xianwen : totdflux(colum)=",totdflux(:)
+         !    write(iulog,*)"Xianwen : taurevcld(colum)=",taurevcld(:)
+         !    write(iulog,*)"Xianwen : ssarevcld(colum)=",ssarevcld(:)
+         !    write(iulog,*)"Xianwen : asyrevcld(colum)=",asyrevcld(:)
+         !    write(iulog,*)"Xianwen : taut(colum)=",taut(:,ig)
+         !    write(iulog,*)"Xianwen : taucloud(colum)=",taucloud(ig,:)
+         !    write(iulog,*)"Xianwen : asmcloud(colum)=",asmcloud(ig,:)
+         !    write(iulog,*)"Xianwen : ssacloud(colum)=",ssacloud(ig,:)
+         !    call endrun('Xianwen : stop model run from radlw.')
+         !  end if
+         !end do
+        !<-- end check
+
          !>>> U-MICH team Dec.18, 2019 cancel >>>
          !if (fluxdncld(0) .gt. 1.e-5) &
          !     write(*,9000) fluxdncld(0), iband, ig
@@ -833,6 +883,10 @@
          do lev = nlayers, 0, -1
             totuclfl (lev) = totuclfl(lev) + fluxupclr(nlayers-lev)
             totdclfl (lev) = totdclfl(lev) + fluxdnclr(nlayers-lev)
+            !>>> U-MICH team Dec.18, 2019, add spectral flux >>>
+            totuclfls(iband,lev)= totuclfls(iband,lev) + fluxupclr(nlayers-lev)  ! upward spectral flux
+            totdclfls(iband,lev)= totdclfls(iband,lev) + fluxdnclr(nlayers-lev)  ! downward spectral flux
+            !<<< U-MICH team Dec.18, 2019, add spectral flux <<<
          enddo
 
          !>>> U-MICH team Dec.18, 2019 cancel >>>
@@ -1044,7 +1098,8 @@
       dgausw  = (/0.5_r8, 0.5_r8/)
 
       ! lamda in eq. 21
-      lamda = sqrt(gama1*gama1 - gama2*gama2)
+      !lamda = sqrt(gama1*gama1 - gama2*gama2)
+      lamda = sqrt(max(gama1*gama1 - gama2*gama2,1.0e-8))
 
       ! gamma in eq. 22
       gama = gama2 / (gama1 + lamda)
@@ -1168,6 +1223,38 @@
                        sigma2(lev)*(cosangle*exptmp1(lev)+taulay(lev)-cosangle)
             ! downward flux at the bottom of the layer
             dnf(lev) = dnf(lev) + 2.0_r8*pi*dni(lev)*cosangle*dgausw(iangle)
+
+       ! check if NaN, xianwen, 2020.06.30 -->
+           !if (isnan(dnf(lev))) then
+           !  write(iulog,*)"Xianwen : NaN found in radiative transfer, &
+           !  lev=",lev,'iangle=',iangle
+           !  write(iulog,*)"Xianwen : dnf=",dnf(lev)
+           !  write(iulog,*)"Xianwen : dni=",dni(lev)
+           !  write(iulog,*)"Xianwen : cosangle=",cosangle
+           !  write(iulog,*)"Xianwen : dgausw=",dgausw(:)
+           !  write(iulog,*)"term1", dni(lev-1)*exptmp1(lev) 
+           !  write(iulog,*)"term2", paramJ(lev)*revpar1(lev)*(1.0_r8-exptmp2(lev))
+           !  write(iulog,*)"term3", paramK(lev)*revpar2(lev)*(exptmp1(lev)-exp2(lev))
+           !  write(iulog,*)"term4", sigma1(lev)*(1.0_r8-exptmp1(lev)) 
+           !  write(iulog,*)"term5", sigma2(lev)*(cosangle*exptmp1(lev)+taulay(lev)-cosangle)
+           !  write(iulog,*)"paramJ=",paramJ(lev)
+           !  write(iulog,*)"paramK=",paramK(lev)
+           !  write(iulog,*)"revpar1=",revpar1(lev)
+           !  write(iulog,*)"revpar2=",revpar2(lev)
+           !  write(iulog,*)"exptmp1=",exptmp1(lev)
+           !  write(iulog,*)"exptmp2=",exptmp2(lev)
+           !  write(iulog,*)"exp2=",exp2(lev)
+           !  write(iulog,*)"k1n=",k1n
+           !  write(iulog,*)"k2n=",k2n
+           !  write(iulog,*)"lamda=",lamda
+           !  write(iulog,*)"gama=",gama
+           !  write(iulog,*)"difactor=",difactor
+           !  write(iulog,*)"gama1=",gama1
+           !  write(iulog,*)"gama2=",gama2
+           !  call endrun('Xianwen : stop model run from radlw.')
+           !end if
+        !<-- end check
+
          enddo
 
          upi(nlayers) = upi(nlayers) + cosangle*dgausw(iangle)*dni(nlayers)

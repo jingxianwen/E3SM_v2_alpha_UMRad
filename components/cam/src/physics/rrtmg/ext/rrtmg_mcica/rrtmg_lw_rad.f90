@@ -102,7 +102,8 @@
              cldfmcl ,taucmcl , ssacmcl, asmcmcl,  &
              ciwpmcl ,clwpmcl ,reicmcl ,relqmcl , &
              tauaer  , &
-             uflx    ,dflx    ,hr      ,uflxc   ,dflxc,  hrc, uflxs, dflxs )
+             uflx    ,dflx    ,hr      ,uflxc   ,dflxc,  hrc, &
+             uflxs, dflxs, uclflxs, dclflxs )
 ! <---
 
 ! -------- Description --------
@@ -285,6 +286,11 @@
                                                         !    Dimensions: (nbndlw,ncol,nlay+1)
       real(kind=r8), intent(out) :: dflxs(:,:,:)        ! Total sky longwave downward flux spectral (W/m2)
                                                         !    Dimensions: (nbndlw,ncol,nlay+1)
+! xianwen add -->
+      real(kind=r8), intent(out) :: uclflxs(:,:,:)      ! Total sky longwave upward flux spectral (W/m2)
+                                                        !    Dimensions: (nbndlw,ncol,nlay+1)
+      real(kind=r8), intent(out) :: dclflxs(:,:,:)      ! Total sky longwave downward flux spectral (W/m2)
+! <--                                                        !    Dimensions: (nbndlw,ncol,nlay+1)
 
 ! ----- Local -----
 
@@ -404,6 +410,8 @@
       real(kind=r8), intent(in) :: asmcmcl(:,:,:)  ! Cloud asymmetric factor
       real(kind=r8) :: ssacmc(ngptlw,nlay)         ! LOCAL, cloud singlescattering albedo
       real(kind=r8) :: asmcmc(ngptlw,nlay)         ! LOCAL, cloud asymmetric factor
+      real(kind=r8) :: totuclfls(nbndlw,0:nlay) ! upward clr-sky longwave flux spectral (w/m2)
+      real(kind=r8) :: totdclfls(nbndlw,0:nlay) ! downward clr-sky longwave flux spectral (w/m2)
 ! <--- 
 
 ! Initializations
@@ -543,14 +551,16 @@
                              planklay, planklev, plankbnd, &
                              pwvcm, fracs, taut, &
                              totuflux, totdflux, fnet, htr, &
-                             totuclfl, totdclfl, fnetc, htrc, totufluxs, totdfluxs)
+                             totuclfl, totdclfl, fnetc, htrc, &
+                             totufluxs, totdfluxs, totuclfls, totdclfls)
          else 
          ! use default transfer routine
             call rtrnmc(nlay, istart, iend, iout, pz, semiss, ncbands, &
                         cldfmc, taucmc, planklay, planklev, plankbnd, &
                         pwvcm, fracs, taut, &
                         totuflux, totdflux, fnet, htr, &
-                        totuclfl, totdclfl, fnetc, htrc, totufluxs, totdfluxs )
+                        totuclfl, totdclfl, fnetc, htrc, &
+                        totufluxs, totdfluxs, totuclfls, totdclfls) ! <--U-MICH add totuclfls and totdclfls
          end if 
 ! <---
 
@@ -564,6 +574,8 @@
             dflxc(iplon,k+1) = totdclfl(k)
             uflxs(:,iplon,k+1) = totufluxs(:,k)
             dflxs(:,iplon,k+1) = totdfluxs(:,k)
+            uclflxs(:,iplon,k+1) = totuclfls(:,k)
+            dclflxs(:,iplon,k+1) = totdclfls(:,k)
          enddo
          do k = 0, nlay-1
             hr(iplon,k+1) = htr(k)

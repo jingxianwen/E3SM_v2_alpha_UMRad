@@ -23,11 +23,11 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = E3SM_v2_alpha_AMIP_RRTMG_UMRad_startover
+set job_name       = AMIP_RRTMG_UMRad_scat
 set compset        = FC5AV1C-04P2
 set resolution     = ne30_ne30
 set machine        = cori-knl
-set walltime       = 00:30:00
+set walltime       = 12:00:00
 setenv project       m2136
 
 ### SOURCE CODE OPTIONS
@@ -45,7 +45,8 @@ set old_executable = false      # build executable is set to 'false', reuse
 
 ### SUBMIT OPTIONS
 set submit_run       = true     # submit experiment after successful build
-set debug_queue      = true     # submit to debug queue?
+set debug_queue      = false     # submit to debug queue?
+set job_queue        = low      #debug, low, regular
 
 ### PROCESSOR CONFIGURATION
 set processor_config = L        # PE count: S (39 nodes), L (285 nodes)
@@ -57,7 +58,7 @@ set run_refcase = 20171228.beta3rc13_1850.ne30_oECv3_ICG.edison
 set run_refdate = 0331-01-01
 
 ### DIRECTORIES
-set code_root_dir               = ~/model_orig/E3SM_v2_alpha_startover
+set code_root_dir               = ~/model/E3SM_v2_alpha_UMRad
 set e3sm_simulations_dir        = /global/cscratch1/sd/$USER/E3SM_simulations
 set case_build_dir              = ${e3sm_simulations_dir}/${case_name}/build
 set case_run_dir                = ${e3sm_simulations_dir}/${case_name}/run
@@ -66,18 +67,18 @@ set short_term_archive_root_dir = ${e3sm_simulations_dir}/${case_name}/archive
 ### LENGTH OF SIMULATION, RESTARTS, AND ARCHIVING
 
 ## 5-day test simulation
-set stop_units       = ndays
-set stop_num         = 2
-set restart_units    = $stop_units
-set restart_num      = 1
-
-## Multi-year simulation
-#set stop_units       = nyears
-#set stop_num         = 1
-#set restart_units    = nyears
+#set stop_units       = ndays
+#set stop_num         = 2
+#set restart_units    = $stop_units
 #set restart_num      = 1
 
-set num_resubmits    = 0
+## Multi-year simulation
+set stop_units       = nyears
+set stop_num         = 2
+set restart_units    = nyears
+set restart_num      = 1
+
+set num_resubmits    = 5
 set do_short_term_archiving      = false
 
 ### SIMULATION OPTIONS
@@ -856,6 +857,8 @@ if ( `lowercase $debug_queue` == true ) then
   else if ($machine != sandiatoss3 && $machine != bebop && $machine != blues) then
     $xmlchange_exe --id JOB_QUEUE --val 'debug'
   endif
+else 
+  $xmlchange_exe --force --id JOB_QUEUE --val $job_queue
 endif
 
 #============================================
@@ -943,14 +946,26 @@ $xmlchange_exe --id DEBUG --val `uppercase $debug_compile`
 # NOTE: $atm_output_freq and $records_per_atm_output_file are so commonly used, that they are set in the options at the top of this script.
 
 cat <<EOF >> user_nl_cam
- nhtfrq = -24
+ nhtfrq = 0
  mfilt  = 1
  avgflag_pertape = 'A'
  empty_htapes = .false.
  flag_mc6=.true.
  flag_emis=.false.
- flag_rtr2=.false.
- flag_scat=.false.
+ flag_rtr2=.true.
+ flag_scat=.true.
+ fincl1='FLDS01','FLDS02','FLDS03','FLDS04','FLDS05','FLDS06','FLDS07','FLDS08',
+        'FLDS09','FLDS10','FLDS11','FLDS12','FLDS13','FLDS14','FLDS15','FLDS16',
+        'FLDSC01','FLDSC02','FLDSC03','FLDSC04','FLDSC05','FLDSC06','FLDSC07','FLDSC08',
+        'FLDSC09','FLDSC10','FLDSC11','FLDSC12','FLDSC13','FLDSC14','FLDSC15','FLDSC16',
+        'FLNS01','FLNS02','FLNS03','FLNS04','FLNS05','FLNS06','FLNS07','FLNS08',
+        'FLNS09','FLNS10','FLNS11','FLNS12','FLNS13','FLNS14','FLNS15','FLNS16',
+        'FLNSC01','FLNSC02','FLNSC03','FLNSC04','FLNSC05','FLNSC06','FLNSC07','FLNSC08',
+        'FLNSC09','FLNSC10','FLNSC11','FLNSC12','FLNSC13','FLNSC14','FLNSC15','FLNSC16',
+        'FLUT01','FLUT02','FLUT03','FLUT04','FLUT05','FLUT06','FLUT07','FLUT08',
+        'FLUT09','FLUT10','FLUT11','FLUT12','FLUT13','FLUT14','FLUT15','FLUT16',
+        'FLUTC01','FLUTC02','FLUTC03','FLUTC04','FLUTC05','FLUTC06','FLUTC07','FLUTC08',
+        'FLUTC09','FLUTC10','FLUTC11','FLUTC12','FLUTC13','FLUTC14','FLUTC15','FLUTC16'
 EOF
 
 cat <<EOF >> user_nl_clm

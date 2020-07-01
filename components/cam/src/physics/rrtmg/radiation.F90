@@ -666,6 +666,9 @@ end function radiation_nextsw_cday
           call addfld('FSNRTOAS'//diag(icall),  horiz_only,     'A','W/m2', &
 	  'Net near-infrared flux (>= 0.7 microns) at top of atmosphere', sampling_seq='rad_lwsw')
           call addfld ('SWCF'//diag(icall),  horiz_only,     'A',   'W/m2', 'Shortwave cloud forcing', sampling_seq='rad_lwsw')
+          !xianwen added ->
+          call addfld ('SWCFSFC'//diag(icall),  horiz_only,     'A',   'W/m2', 'Shortwave surface cloud forcing', sampling_seq='rad_lwsw')
+          !<-
 
           if (history_amwg) then
              call add_default('SOLIN'//diag(icall),   1, ' ')
@@ -681,6 +684,7 @@ end function radiation_nextsw_cday
              call add_default('FSDSC'//diag(icall),   1, ' ')
              call add_default('FSDS'//diag(icall),    1, ' ')
              call add_default('SWCF'//diag(icall),    1, ' ')
+             call add_default('SWCFSFC'//diag(icall),    1, ' ') !xianwen added
           endif
 
        end if
@@ -731,18 +735,221 @@ end function radiation_nextsw_cday
           call addfld('FDLC'//diag(icall), (/ 'ilev' /),'I',    'W/m2', 'Longwave clear-sky downward flux')
 
 ! U-MICH team on Dec.18, 2019 add other fields --->
-          call addfld('TAU_LIQ'//diag(icall), (/ 'ilev' /),'A',     ' ', 'Liquid optical depth')
-          call addfld('TAU_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE optical depth')
-          call addfld('TAUA_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE optical depth (absorption)')
-          call addfld('SSA_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE single scattering albedo')
-          call addfld('G_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE asymmetric factor')
-          call addfld('TAU_SNO'//diag(icall), (/ 'ilev' /),'A',     ' ', 'SNOW optical depth')
-          call addfld('TAU_TOT'//diag(icall), (/ 'ilev' /),'A',     ' ', 'All clouds optical depth')
-          call addfld('TAU_LIQ_SUM'//diag(icall), horiz_only,'A',     ' ', 'Liquid optical depth (vertical sum)')
-          call addfld('TAU_ICE_SUM'//diag(icall), horiz_only,'A',     ' ', 'ICE optical depth (vertical sum)')
-          call addfld('TAUA_ICE_SUM'//diag(icall), horiz_only,'A',     ' ', 'ICE Absorption optical depth (vertical sum)')
-          call addfld('TAU_SNO_SUM'//diag(icall), horiz_only,'A',     ' ', 'Snow optical depth (vertical sum)')
-          call addfld('TAU_TOT_SUM'//diag(icall), horiz_only,'A',     ' ', 'All clouds optical depth (vertical sum)')
+          !call addfld('TAU_LIQ'//diag(icall), (/ 'ilev' /),'A',     ' ', 'Liquid optical depth')
+          !call addfld('TAU_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE optical depth')
+          !call addfld('TAUA_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE optical depth (absorption)')
+          !call addfld('SSA_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE single scattering albedo')
+          !call addfld('G_ICE'//diag(icall), (/ 'ilev' /),'A',     ' ', 'ICE asymmetric factor')
+          !call addfld('TAU_SNO'//diag(icall), (/ 'ilev' /),'A',     ' ', 'SNOW optical depth')
+          !call addfld('TAU_TOT'//diag(icall), (/ 'ilev' /),'A',     ' ', 'All clouds optical depth')
+          !call addfld('TAU_LIQ_SUM'//diag(icall), horiz_only,'A',     ' ', 'Liquid optical depth (vertical sum)')
+          !call addfld('TAU_ICE_SUM'//diag(icall), horiz_only,'A',     ' ', 'ICE optical depth (vertical sum)')
+          !call addfld('TAUA_ICE_SUM'//diag(icall), horiz_only,'A',     ' ', 'ICE Absorption optical depth (vertical sum)')
+          !call addfld('TAU_SNO_SUM'//diag(icall), horiz_only,'A',     ' ', 'Snow optical depth (vertical sum)')
+          !call addfld('TAU_TOT_SUM'//diag(icall), horiz_only,'A',     ' ', 'All clouds optical depth (vertical sum)')
+
+          call addfld('LWCFSFC'//diag(icall), horiz_only,    'A',    'W/m2', 'Longwave surface cloud forcing', sampling_seq='rad_lwsw')
+
+          call addfld('FLUT01'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 01 - 10-350 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT02'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 02 - 350-500 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT03'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 03 - 500-630 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT04'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 04 - 630-700 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT05'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 05 - 700-820 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT06'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 06 - 820-980 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT07'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 07 - 980-1080 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT08'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW - band 08 - 1080-1180 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT09'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW - band 09 - 1180-1390 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT10'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW - band 10 - 1390-1480 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT11'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW - band 11 - 1480-1800 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT12'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 12 - 1800-2080 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT13'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 13 - 2080-2250 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT14'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 14 - 2250-2380 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT15'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 15-  2380-2600 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUT16'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW - band 16 - 2600-3250 cm-1',&
+                  sampling_seq='rad_lwsw')
+
+          call addfld('FLUTC01'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 01 - 10-350 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC02'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 02 - 350-500 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC03'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 03 - 500-630 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC04'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 04 - 630-700 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC05'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 05 - 700-820 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC06'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 06 - 820-980 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC07'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 07 - 980-1080 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC08'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 08 - 1080-1180 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC09'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 09 - 1180-1390 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC10'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 10 - 1390-1480 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC11'//diag(icall),  horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 11 - 1480-1800 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC12'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 12 - 1800-2080 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC13'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 13 - 2080-2250 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC14'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 14 - 2250-2380 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC15'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 15-  2380-2600 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLUTC16'//diag(icall),   horiz_only,'A', 'Wm-2', 'TOA up LW clr - band 16 - 2600-3250 cm-1',&
+                  sampling_seq='rad_lwsw')
+
+          call addfld('FLDS01'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 01 - 10-350 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS02'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 02 - 350-500 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS03'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 03 - 500-630 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS04'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 04 - 630-700 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS05'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 05 - 700-820 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS06'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 06 - 820-980 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS07'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 07 - 980-1080 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS08'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW - band 08 - 1080-1180 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS09'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW - band 09 - 1180-1390 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS10'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW - band 10 - 1390-1480 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS11'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW - band 11 - 1480-1800 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS12'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 12 - 1800-2080 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS13'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 13 - 2080-2250 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS14'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 14 - 2250-2380 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS15'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 15-  2380-2600 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDS16'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW - band 16 - 2600-3250 cm-1',&
+                  sampling_seq='rad_lwsw')
+
+          call addfld('FLDSC01'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 01 - 10-350 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC02'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 02 - 350-500 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC03'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 03 - 500-630 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC04'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 04 - 630-700 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC05'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 05 - 700-820 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC06'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 06 - 820-980 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC07'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 07 - 980-1080 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC08'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 08 - 1080-1180 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC09'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 09 - 1180-1390 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC10'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 10 - 1390-1480 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC11'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 11 - 1480-1800 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC12'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 12 - 1800-2080 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC13'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 13 - 2080-2250 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC14'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 14 - 2250-2380 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC15'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 15-  2380-2600 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLDSC16'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC down LW clr - band 16 - 2600-3250 cm-1',&
+                  sampling_seq='rad_lwsw')
+
+          call addfld('FLNS01'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 01 - 10-350 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS02'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 02 - 350-500 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS03'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 03 - 500-630 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS04'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 04 - 630-700 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS05'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 05 - 700-820 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS06'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 06 - 820-980 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS07'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 07 - 980-1080 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS08'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW - band 08 - 1080-1180 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS09'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW - band 09 - 1180-1390 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS10'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW - band 10 - 1390-1480 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS11'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW - band 11 - 1480-1800 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS12'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 12 - 1800-2080 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS13'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 13 - 2080-2250 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS14'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 14 - 2250-2380 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS15'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 15-  2380-2600 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNS16'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW - band 16 - 2600-3250 cm-1',&
+                  sampling_seq='rad_lwsw')
+
+          call addfld('FLNSC01'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 01 - 10-350 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC02'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 02 - 350-500 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC03'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 03 - 500-630 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC04'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 04 - 630-700 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC05'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 05 - 700-820 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC06'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 06 - 820-980 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC07'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 07 - 980-1080 cm-1', &
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC08'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 08 - 1080-1180 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC09'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 09 - 1180-1390 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC10'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 10 - 1390-1480 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC11'//diag(icall),  horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 11 - 1480-1800 cm-1',& 
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC12'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 12 - 1800-2080 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC13'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 13 - 2080-2250 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC14'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 14 - 2250-2380 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC15'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 15-  2380-2600 cm-1',&
+                  sampling_seq='rad_lwsw')
+          call addfld('FLNSC16'//diag(icall),   horiz_only,'A', 'Wm-2', 'SFC net LW clr - band 16 - 2600-3250 cm-1',&
+                  sampling_seq='rad_lwsw')
+
+          call add_default('FLDS'//diag(icall),  1, ' ')
+          call add_default('FLDSC'//diag(icall),  1, ' ')
 
 !          call addfld('EMIS01'//diag(icall),   horiz_only,'A', 'unitless', 'surface emissivity - band 01 - 10-350 cm-1', &
 !                  sampling_seq='rad_lwsw')
@@ -789,6 +996,8 @@ end function radiation_nextsw_cday
              call add_default('FLNTC'//diag(icall), 1, ' ')
              call add_default('FLNSC'//diag(icall), 1, ' ')
              call add_default('LWCF'//diag(icall),  1, ' ')
+             call add_default('LWCFSFC'//diag(icall),  1, ' ') !xianwen added
+             call add_default('FLDSC'//diag(icall),  1, ' ')   !xianwen added
           endif
 
        end if
@@ -1116,9 +1325,20 @@ end function radiation_nextsw_cday
     integer :: iband, j
 
     real(r8) :: surface_emis(pcols,nbndlw)  ! surface band-by-band emissivity
-    real(r8) :: lwdn_spec(nbndlw, pcols)    ! spectral download LW flux
+    !real(r8) :: lwdn_spec(nbndlw, pcols)    ! spectral download LW flux
     real(r8) :: ts_lw(pcols)                ! surface temperature derived from longwave upward flux 
                                             ! using realistic emissivity values    
+    !xianwen added
+    real(r8) :: flds_spec(nbndlw,pcols)          ! Spectral Down flux at surface
+    real(r8) :: fldsc_spec(nbndlw,pcols)         ! Spectral Down clear-sky flux at surface   
+    real(r8) :: flns_spec(nbndlw,pcols)          ! Spectral Surface cooling flux
+    real(r8) :: flnsc_spec(nbndlw,pcols)         ! Spectral Clear sky surface cooing
+    real(r8) :: flut_spec(nbndlw,pcols)          ! Spectral Upward flux at top of model
+    real(r8) :: flutc_spec(nbndlw,pcols)         ! Spectral Net clear sky outgoing flux
+    real(r8) :: lwcfsfc(pcols)          ! surface longwave cloud forcing
+    real(r8) :: swcfsfc(pcols)          ! surface shortwave cloud forcing
+    !<-
+    
    ! for output test only                                             
     !real(r8) :: tau_liq (pcols,pver) ! liquid optical depth (vertical sum)
     !real(r8) :: tau_ice (pcols,pver) ! ice optical depth (vertical sum)
@@ -1153,8 +1373,14 @@ end function radiation_nextsw_cday
     c_cld_lw_asm(:,:,:)   = 0._r8
 
     surface_emis(:,:)   = 1._r8
-    lwdn_spec(:,:)      = 0._r8
+    !lwdn_spec(:,:)      = 0._r8
     ts_lw(:)            = 0._r8 
+    flds_spec(:,:)      = 0._r8
+    fldsc_spec(:,:)     = 0._r8
+    flns_spec(:,:)      = 0._r8
+    flnsc_spec(:,:)     = 0._r8
+    flut_spec(:,:)      = 0._r8
+    flutc_spec(:,:)     = 0._r8
 
    ! for test only
     !tau_liq (:,:)   = 0._r8
@@ -1363,7 +1589,7 @@ end function radiation_nextsw_cday
              call pbuf_set_field(pbuf,cld_tau_idx,cld_tau(rrtmg_sw_cloudsim_band, :, :))                   
           end if
 
-       endif
+       endif  !(dosw)
 
        if (dolw) then
  ! U-MICH team on Dec.18, 2019 add MC6 ice optics --->
@@ -1631,6 +1857,7 @@ end function radiation_nextsw_cday
                   do i=1,ncol
                      swcf(i)=fsntoa(i) - fsntoac(i)
                      fsutoac(i) = solin(i) - fsntoac(i)
+                     swcfsfc(i)=fsns(i) - fsnsc(i) !xianwen added
                   end do
 
                   if(do_aerocom_ind3) then
@@ -1693,6 +1920,7 @@ end function radiation_nextsw_cday
                   call outfld('FSN200'//diag(icall),fsn200,pcols,lchnk)
                   call outfld('FSN200C'//diag(icall),fsn200c,pcols,lchnk)
                   call outfld('SWCF'//diag(icall),swcf  ,pcols,lchnk)
+                  call outfld('SWCFSFC'//diag(icall),swcfsfc  ,pcols,lchnk) !xianwen added
 
               end if ! (active_calls(icall))
           end do ! icall
@@ -1782,13 +2010,13 @@ end function radiation_nextsw_cday
                    ! U-MICH team add input --->
                        flag_rtr2,     c_cld_lw_ssa,  c_cld_lw_asm,  surface_emis,   &
                    ! U-MICH team add output --->
-                       lwdn_spec         )
+                       flds_spec, fldsc_spec, flns_spec, flnsc_spec, flut_spec, flutc_spec )
                     !!!c_cld_lw_asm,  surface_emis,  ful,  fsul,  fdl, fsdl, lwdn_spec         )
 
                   ! U-MICH save spectral flwds for emissivty calculation of next step 
                   do i=1,ncol
                     do j=1,nbndlw
-                      cam_out%flwds_spec(i,j) = lwdn_spec(j, i)
+                      cam_out%flwds_spec(i,j) = flds_spec(j, i)
                     end do 
                   end do
 ! <-- end of U-MICH change
@@ -1812,6 +2040,7 @@ end function radiation_nextsw_cday
 		  
 		  do i=1,ncol
                      lwcf(i)=flutc(i) - flut(i)
+                     lwcfsfc(i)=flnsc(i) - flns(i)
                   end do
 
                   !  Output fluxes at 200 mb
@@ -1834,6 +2063,109 @@ end function radiation_nextsw_cday
                   call outfld('FLDS'//diag(icall),cam_out%flwds ,pcols,lchnk)
 
               !U-MICH test only
+                  call outfld('LWCFSFC'//diag(icall),lwcfsfc  ,pcols,lchnk)
+                  call outfld('FLDS01'//diag(icall),flds_spec( 1,:) ,pcols,lchnk)
+                  call outfld('FLDS02'//diag(icall),flds_spec( 2,:) ,pcols,lchnk)
+                  call outfld('FLDS03'//diag(icall),flds_spec( 3,:) ,pcols,lchnk)
+                  call outfld('FLDS04'//diag(icall),flds_spec( 4,:) ,pcols,lchnk)
+                  call outfld('FLDS05'//diag(icall),flds_spec( 5,:) ,pcols,lchnk)
+                  call outfld('FLDS06'//diag(icall),flds_spec( 6,:) ,pcols,lchnk)
+                  call outfld('FLDS07'//diag(icall),flds_spec( 7,:) ,pcols,lchnk)
+                  call outfld('FLDS08'//diag(icall),flds_spec( 8,:) ,pcols,lchnk)
+                  call outfld('FLDS09'//diag(icall),flds_spec( 9,:) ,pcols,lchnk)
+                  call outfld('FLDS10'//diag(icall),flds_spec(10,:) ,pcols,lchnk)
+                  call outfld('FLDS11'//diag(icall),flds_spec(11,:) ,pcols,lchnk)
+                  call outfld('FLDS12'//diag(icall),flds_spec(12,:) ,pcols,lchnk)
+                  call outfld('FLDS13'//diag(icall),flds_spec(13,:) ,pcols,lchnk)
+                  call outfld('FLDS14'//diag(icall),flds_spec(14,:) ,pcols,lchnk)
+                  call outfld('FLDS15'//diag(icall),flds_spec(15,:) ,pcols,lchnk)
+                  call outfld('FLDS16'//diag(icall),flds_spec(16,:) ,pcols,lchnk)
+
+                  call outfld('FLDSC01'//diag(icall),fldsc_spec( 1,:) ,pcols,lchnk)
+                  call outfld('FLDSC02'//diag(icall),fldsc_spec( 2,:) ,pcols,lchnk)
+                  call outfld('FLDSC03'//diag(icall),fldsc_spec( 3,:) ,pcols,lchnk)
+                  call outfld('FLDSC04'//diag(icall),fldsc_spec( 4,:) ,pcols,lchnk)
+                  call outfld('FLDSC05'//diag(icall),fldsc_spec( 5,:) ,pcols,lchnk)
+                  call outfld('FLDSC06'//diag(icall),fldsc_spec( 6,:) ,pcols,lchnk)
+                  call outfld('FLDSC07'//diag(icall),fldsc_spec( 7,:) ,pcols,lchnk)
+                  call outfld('FLDSC08'//diag(icall),fldsc_spec( 8,:) ,pcols,lchnk)
+                  call outfld('FLDSC09'//diag(icall),fldsc_spec( 9,:) ,pcols,lchnk)
+                  call outfld('FLDSC10'//diag(icall),fldsc_spec(10,:) ,pcols,lchnk)
+                  call outfld('FLDSC11'//diag(icall),fldsc_spec(11,:) ,pcols,lchnk)
+                  call outfld('FLDSC12'//diag(icall),fldsc_spec(12,:) ,pcols,lchnk)
+                  call outfld('FLDSC13'//diag(icall),fldsc_spec(13,:) ,pcols,lchnk)
+                  call outfld('FLDSC14'//diag(icall),fldsc_spec(14,:) ,pcols,lchnk)
+                  call outfld('FLDSC15'//diag(icall),fldsc_spec(15,:) ,pcols,lchnk)
+                  call outfld('FLDSC16'//diag(icall),fldsc_spec(16,:) ,pcols,lchnk)
+
+                  call outfld('FLNS01'//diag(icall),flns_spec( 1,:) ,pcols,lchnk)
+                  call outfld('FLNS02'//diag(icall),flns_spec( 2,:) ,pcols,lchnk)
+                  call outfld('FLNS03'//diag(icall),flns_spec( 3,:) ,pcols,lchnk)
+                  call outfld('FLNS04'//diag(icall),flns_spec( 4,:) ,pcols,lchnk)
+                  call outfld('FLNS05'//diag(icall),flns_spec( 5,:) ,pcols,lchnk)
+                  call outfld('FLNS06'//diag(icall),flns_spec( 6,:) ,pcols,lchnk)
+                  call outfld('FLNS07'//diag(icall),flns_spec( 7,:) ,pcols,lchnk)
+                  call outfld('FLNS08'//diag(icall),flns_spec( 8,:) ,pcols,lchnk)
+                  call outfld('FLNS09'//diag(icall),flns_spec( 9,:) ,pcols,lchnk)
+                  call outfld('FLNS10'//diag(icall),flns_spec(10,:) ,pcols,lchnk)
+                  call outfld('FLNS11'//diag(icall),flns_spec(11,:) ,pcols,lchnk)
+                  call outfld('FLNS12'//diag(icall),flns_spec(12,:) ,pcols,lchnk)
+                  call outfld('FLNS13'//diag(icall),flns_spec(13,:) ,pcols,lchnk)
+                  call outfld('FLNS14'//diag(icall),flns_spec(14,:) ,pcols,lchnk)
+                  call outfld('FLNS15'//diag(icall),flns_spec(15,:) ,pcols,lchnk)
+                  call outfld('FLNS16'//diag(icall),flns_spec(16,:) ,pcols,lchnk)
+
+                  call outfld('FLNSC01'//diag(icall),flnsc_spec( 1,:) ,pcols,lchnk)
+                  call outfld('FLNSC02'//diag(icall),flnsc_spec( 2,:) ,pcols,lchnk)
+                  call outfld('FLNSC03'//diag(icall),flnsc_spec( 3,:) ,pcols,lchnk)
+                  call outfld('FLNSC04'//diag(icall),flnsc_spec( 4,:) ,pcols,lchnk)
+                  call outfld('FLNSC05'//diag(icall),flnsc_spec( 5,:) ,pcols,lchnk)
+                  call outfld('FLNSC06'//diag(icall),flnsc_spec( 6,:) ,pcols,lchnk)
+                  call outfld('FLNSC07'//diag(icall),flnsc_spec( 7,:) ,pcols,lchnk)
+                  call outfld('FLNSC08'//diag(icall),flnsc_spec( 8,:) ,pcols,lchnk)
+                  call outfld('FLNSC09'//diag(icall),flnsc_spec( 9,:) ,pcols,lchnk)
+                  call outfld('FLNSC10'//diag(icall),flnsc_spec(10,:) ,pcols,lchnk)
+                  call outfld('FLNSC11'//diag(icall),flnsc_spec(11,:) ,pcols,lchnk)
+                  call outfld('FLNSC12'//diag(icall),flnsc_spec(12,:) ,pcols,lchnk)
+                  call outfld('FLNSC13'//diag(icall),flnsc_spec(13,:) ,pcols,lchnk)
+                  call outfld('FLNSC14'//diag(icall),flnsc_spec(14,:) ,pcols,lchnk)
+                  call outfld('FLNSC15'//diag(icall),flnsc_spec(15,:) ,pcols,lchnk)
+                  call outfld('FLNSC16'//diag(icall),flnsc_spec(16,:) ,pcols,lchnk)
+
+                  call outfld('FLUT01'//diag(icall),flut_spec( 1,:) ,pcols,lchnk)
+                  call outfld('FLUT02'//diag(icall),flut_spec( 2,:) ,pcols,lchnk)
+                  call outfld('FLUT03'//diag(icall),flut_spec( 3,:) ,pcols,lchnk)
+                  call outfld('FLUT04'//diag(icall),flut_spec( 4,:) ,pcols,lchnk)
+                  call outfld('FLUT05'//diag(icall),flut_spec( 5,:) ,pcols,lchnk)
+                  call outfld('FLUT06'//diag(icall),flut_spec( 6,:) ,pcols,lchnk)
+                  call outfld('FLUT07'//diag(icall),flut_spec( 7,:) ,pcols,lchnk)
+                  call outfld('FLUT08'//diag(icall),flut_spec( 8,:) ,pcols,lchnk)
+                  call outfld('FLUT09'//diag(icall),flut_spec( 9,:) ,pcols,lchnk)
+                  call outfld('FLUT10'//diag(icall),flut_spec(10,:) ,pcols,lchnk)
+                  call outfld('FLUT11'//diag(icall),flut_spec(11,:) ,pcols,lchnk)
+                  call outfld('FLUT12'//diag(icall),flut_spec(12,:) ,pcols,lchnk)
+                  call outfld('FLUT13'//diag(icall),flut_spec(13,:) ,pcols,lchnk)
+                  call outfld('FLUT14'//diag(icall),flut_spec(14,:) ,pcols,lchnk)
+                  call outfld('FLUT15'//diag(icall),flut_spec(15,:) ,pcols,lchnk)
+                  call outfld('FLUT16'//diag(icall),flut_spec(16,:) ,pcols,lchnk)
+
+                  call outfld('FLUTC01'//diag(icall),flutc_spec( 1,:) ,pcols,lchnk)
+                  call outfld('FLUTC02'//diag(icall),flutc_spec( 2,:) ,pcols,lchnk)
+                  call outfld('FLUTC03'//diag(icall),flutc_spec( 3,:) ,pcols,lchnk)
+                  call outfld('FLUTC04'//diag(icall),flutc_spec( 4,:) ,pcols,lchnk)
+                  call outfld('FLUTC05'//diag(icall),flutc_spec( 5,:) ,pcols,lchnk)
+                  call outfld('FLUTC06'//diag(icall),flutc_spec( 6,:) ,pcols,lchnk)
+                  call outfld('FLUTC07'//diag(icall),flutc_spec( 7,:) ,pcols,lchnk)
+                  call outfld('FLUTC08'//diag(icall),flutc_spec( 8,:) ,pcols,lchnk)
+                  call outfld('FLUTC09'//diag(icall),flutc_spec( 9,:) ,pcols,lchnk)
+                  call outfld('FLUTC10'//diag(icall),flutc_spec(10,:) ,pcols,lchnk)
+                  call outfld('FLUTC11'//diag(icall),flutc_spec(11,:) ,pcols,lchnk)
+                  call outfld('FLUTC12'//diag(icall),flutc_spec(12,:) ,pcols,lchnk)
+                  call outfld('FLUTC13'//diag(icall),flutc_spec(13,:) ,pcols,lchnk)
+                  call outfld('FLUTC14'//diag(icall),flutc_spec(14,:) ,pcols,lchnk)
+                  call outfld('FLUTC15'//diag(icall),flutc_spec(15,:) ,pcols,lchnk)
+                  call outfld('FLUTC16'//diag(icall),flutc_spec(16,:) ,pcols,lchnk)
+
                   !call outfld('TAU_LIQ'//diag(icall), tau_liq(:,:), pcols,lchnk)
                   !call outfld('TAU_ICE'//diag(icall), tau_ice(:,:), pcols,lchnk)
                   !call outfld('TAUA_ICE'//diag(icall), taua_ice(:,:), pcols,lchnk)
@@ -1967,6 +2299,20 @@ end function radiation_nextsw_cday
     ! Compute net radiative heating tendency
     call radheat_tend(state, pbuf,  ptend, qrl, qrs, fsns, &
                       fsnt, flns, flnt, cam_in%asdir, net_flx)
+
+    ! check if NaN, xianwen, 2020.06.30 -->
+    !do k=1,pver
+    !   do i=1,ncol
+    !      if (isnan(ptend%s(i,k))) then
+    !           write(iulog,*)"Xianwen checkpoint: NaN found in ptend%s due to radheat!"
+    !           write(iulog,*)"Xianwen checkpoint: qrl(colum)=",qrl(i,:)
+    !           write(iulog,*)"Xianwen checkpoint: qrs(colum)=",qrs(i,:)
+    !           call endrun('Xianwen checkpoint: stop model run from radiation.')
+    !      end if
+    !   end do
+    !end do
+    !<-- end check
+
     call t_stopf ('radheat_tend')
 
     ! Compute heating rate for dtheta/dt 
