@@ -23,7 +23,7 @@
 ###===================================================================
 
 ### BASIC INFO ABOUT RUN
-set job_name       = CMIP6_2000S_RRTMG_UMRad_Scat
+set job_name       = CMIP_RRTMG_UMRad_abs
 set compset        = A_WCYCL2000S
 set resolution     = ne30_oECv3_ICG
 set machine        = cori-knl
@@ -36,7 +36,9 @@ set e3sm_tag       = maint-1.0   # github tag or hash
 set tag_name       = 20180420    # code sub-directory name
 
 ### CASE_NAME
-set case_name = ${job_name}.ne30_oEC.cori-knl
+set ensnum = "ens1" 
+set pertlim = 1.d-14
+set case_name = ${job_name}.ne30_ne30.cori-knl-ens-${ensnum}
 
 ### BUILD OPTIONS
 set debug_compile  = false
@@ -45,7 +47,8 @@ set old_executable = false      # build executable is set to 'false', reuse
 
 ### SUBMIT OPTIONS
 set submit_run       = true     # submit experiment after successful build
-set debug_queue      = false    # submit to debug queue?
+set debug_queue      = false     # submit to debug queue?
+set job_queue        = low      #debug, low, regular
 
 ### PROCESSOR CONFIGURATION
 set processor_config = L        # PE count: S (39 nodes), L (285 nodes)
@@ -67,17 +70,17 @@ set short_term_archive_root_dir = ${e3sm_simulations_dir}/${case_name}/archive
 
 ## 5-day test simulation
 #set stop_units       = ndays
-#set stop_num         = 1
+#set stop_num         = 2
 #set restart_units    = $stop_units
-#set restart_num      = $stop_num
+#set restart_num      = 1
 
 ## Multi-year simulation
-set stop_units       = nyears
-set stop_num         = 1
-set restart_units    = nyears
-set restart_num      = 1
+set stop_units       = nmonths
+set stop_num         = 18
+set restart_units    = nmonths
+set restart_num      = 6
 
-set num_resubmits    = 20
+set num_resubmits    = 16
 set do_short_term_archiving      = false
 
 ### SIMULATION OPTIONS
@@ -832,10 +835,10 @@ endif
 ## Chris Golaz: switch to rrtmgp
 if ( $rad_schm == RRTMGP ) then
   $xmlchange_exe --append CAM_CONFIG_OPTS='-rad rrtmgp'
-  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMGP_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc
+  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMGP_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc  
 else if ($rad_schm == RRTMG) then
-  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMG_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc
-else
+  ln -s /global/cscratch1/sd/xianwen/data/emis/surface_emissivity_1x1_RRTMG_53deg.nc $case_run_dir/surface_emissivity_1x1_UMRad_53deg.nc  
+else 
   e3sm_newline
   e3sm_print 'ERROR: rad_schm should be either RRTMG or RRTMGP'
   e3sm_newline
@@ -856,6 +859,8 @@ if ( `lowercase $debug_queue` == true ) then
   else if ($machine != sandiatoss3 && $machine != bebop && $machine != blues) then
     $xmlchange_exe --id JOB_QUEUE --val 'debug'
   endif
+else 
+  $xmlchange_exe --force --id JOB_QUEUE --val $job_queue
 endif
 
 #============================================
@@ -943,34 +948,32 @@ $xmlchange_exe --id DEBUG --val `uppercase $debug_compile`
 # NOTE: $atm_output_freq and $records_per_atm_output_file are so commonly used, that they are set in the options at the top of this script.
 
 cat <<EOF >> user_nl_cam
- nhtfrq = -1
+ nhtfrq = 0
  mfilt  = 1
+ pertlim = $pertlim
  avgflag_pertape = 'A'
- fincl1 = 'FLDSC','FLDS'
  empty_htapes = .false.
- flag_emis = .false.
- flag_scat = .true. 
- flag_rtr2 = .true.
- flag_mc6  = .true.
- !scenario_ghg = 'FIXED'
- !srf_emis_type = 'CYCLICAL'
- !srf_emis_cycle_yr = 2010
- !ext_frc_type = 'CYCLICAL'
- !ext_frc_cycle_yr = 2010
- !prescribed_volcaero_type = 'CYCLICAL'
- !prescribed_volcaero_cycle_yr = 2010
- !linoz_data_type = 'CYCLICAL'
- !linoz_data_cycle_yr = 2010
- !tracer_cnst_type = 'CYCLICAL'
- !tracer_cnst_cycle_yr = 2010
- !chlorine_loading_type = 'FIXED'
- !chlorine_loading_fixed_ymd = 20100701
- !chlorine_loading_fixed_tod = 0
+ flag_mc6=.true.
+ flag_emis=.false.
+ flag_rtr2=.true.
+ flag_scat=.false.
+ fincl1='FLDS01','FLDS02','FLDS03','FLDS04','FLDS05','FLDS06','FLDS07','FLDS08',
+        'FLDS09','FLDS10','FLDS11','FLDS12','FLDS13','FLDS14','FLDS15','FLDS16',
+        'FLDSC01','FLDSC02','FLDSC03','FLDSC04','FLDSC05','FLDSC06','FLDSC07','FLDSC08',
+        'FLDSC09','FLDSC10','FLDSC11','FLDSC12','FLDSC13','FLDSC14','FLDSC15','FLDSC16',
+        'FLNS01','FLNS02','FLNS03','FLNS04','FLNS05','FLNS06','FLNS07','FLNS08',
+        'FLNS09','FLNS10','FLNS11','FLNS12','FLNS13','FLNS14','FLNS15','FLNS16',
+        'FLNSC01','FLNSC02','FLNSC03','FLNSC04','FLNSC05','FLNSC06','FLNSC07','FLNSC08',
+        'FLNSC09','FLNSC10','FLNSC11','FLNSC12','FLNSC13','FLNSC14','FLNSC15','FLNSC16',
+        'FLUT01','FLUT02','FLUT03','FLUT04','FLUT05','FLUT06','FLUT07','FLUT08',
+        'FLUT09','FLUT10','FLUT11','FLUT12','FLUT13','FLUT14','FLUT15','FLUT16',
+        'FLUTC01','FLUTC02','FLUTC03','FLUTC04','FLUTC05','FLUTC06','FLUTC07','FLUTC08',
+        'FLUTC09','FLUTC10','FLUTC11','FLUTC12','FLUTC13','FLUTC14','FLUTC15','FLUTC16'
 EOF
 
-#cat <<EOF >> user_nl_clm
-# check_finidat_year_consistency = .false.
-#EOF
+cat <<EOF >> user_nl_clm
+ check_finidat_year_consistency = .false.
+EOF
 
 ### NOTES ON COMMON NAMELIST OPTIONS ###
 
@@ -1000,6 +1003,8 @@ if ( `lowercase $old_executable` == false ) then
   e3sm_newline
   e3sm_print '-------- Finished Build --------'
   e3sm_newline
+
+
 else if ( `lowercase $old_executable` == true ) then
   if ( -x $case_build_dir/$e3sm_exe ) then       #use executable previously generated for this case_name.
     e3sm_print 'Skipping build because $old_executable='$old_executable
