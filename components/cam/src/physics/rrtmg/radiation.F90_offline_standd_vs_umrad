@@ -1385,7 +1385,7 @@ end function radiation_nextsw_cday
 
     !>>>> xianwen 2019-10-26 >>>>>>
     ! offline mc6 lw radiation 
-    logical, parameter :: offline_flag = .false.  ! flag to control lw mc6 radiation
+    logical, parameter :: offline_flag = .True.  ! flag to control lw mc6 radiation
     real(r8) :: c_cld_lw_abs_off (nbndlw,pcols,pver)
     real(r8) :: c_cld_lw_ext_off (nbndlw,pcols,pver)
     real(r8) :: c_cld_lw_ssa_off (nbndlw,pcols,pver)
@@ -1650,7 +1650,7 @@ end function radiation_nextsw_cday
 
        if (dolw) then
  ! U-MICH team on Dec.18, 2019 add MC6 ice optics --->
-          if (.not.flag_mc6) then  ! use E3SM default LW scheme.
+          !if (.not.flag_mc6) then  ! use E3SM default LW scheme.
              if(oldcldoptics) then
                 call cloud_rad_props_get_lw(state, pbuf, cld_lw_abs, oldcloud=.true.)
              else
@@ -1715,16 +1715,16 @@ end function radiation_nextsw_cday
             !tau_tot(:,:) = c_cld_lw_ext(2,:,:)
             !tau_tot_sum(:) = sum(c_cld_lw_ext(2,:,:),dim=2)
 
-           !if (offline_flag) then
-           !  !to offline lw mc6.
-           !    c_cld_lw_abs_off  (1:nbndlw,1:ncol,:)  = c_cld_lw_abs(:,:,:)
-           !    c_cld_lw_ext_off  (1:nbndlw,1:ncol,:)  = c_cld_lw_abs(:,:,:)
-           !    c_cld_lw_ssa_off  (1:nbndlw,1:ncol,:)  = 0._r8 !cld_lw_ssa(:,1:ncol,:)
-           !    c_cld_lw_asm_off  (1:nbndlw,1:ncol,:)  = 0._r8 !cld_lw_asm(1:nbndlw,1:ncol,:)
-           !endif
+           if (offline_flag) then
+             !to offline lw mc6.
+               c_cld_lw_abs_off  (1:nbndlw,1:ncol,:)  = c_cld_lw_abs(:,:,:)
+               c_cld_lw_ext_off  (1:nbndlw,1:ncol,:)  = c_cld_lw_abs(:,:,:)
+               c_cld_lw_ssa_off  (1:nbndlw,1:ncol,:)  = 0._r8 !cld_lw_ssa(:,1:ncol,:)
+               c_cld_lw_asm_off  (1:nbndlw,1:ncol,:)  = 0._r8 !cld_lw_asm(1:nbndlw,1:ncol,:)
+           endif
 
  ! U-MICH team on Dec.18, 2019, MC6 ice optics with ice scattering--->
-         else ! (flag_mc6) use MC6 ice optics    
+         !else ! (flag_mc6) use MC6 ice optics    
 
             ! liquid optics (the E3SM default)
             select case (liqcldoptics)
@@ -1858,7 +1858,7 @@ end function radiation_nextsw_cday
             !tau_tot(:,:) = c_cld_lw_ext(2,:,:)
             !tau_tot_sum(:) = sum(c_cld_lw_ext(2,:,:),dim=2)
 
-         endif !(.not.flag_mc6)
+         !endif !(.not.flag_mc6)
 
        endif !(dolw)
 
@@ -2072,23 +2072,23 @@ end function radiation_nextsw_cday
 !                  call t_stopf ('rad_rrtmg_lw')
 
 ! U-MICH team modify --->
-                  !if (offline_flag) then
-                  !    call rad_rrtmg_lw( &
-                  !         lchnk,        ncol,         num_rrtmg_levs,  r_state,                     &
-                  !     ! U-MICH team replace c_cld_lw_abs with c_cld_lw_ext--->
-                  !         state%pmid,   aer_lw_abs,   cldfprime,       c_cld_lw_ext_off,            &
-                  !         qrl_off,          qrlc_off,                                                       &
-                  !         flns_off,         flnt_off,         flnsc_off,           flntc_off,        flwds_off, &
-                  !         flut_off,         flutc_off,        fnl_off,             fcnl_off,         fldsc_off,         &
-                  !         clm_seed,     lu,           ld,                                           &
-                  !     ! U-MICH team add input --->
-                  !         .false.,     c_cld_lw_ssa_off,  c_cld_lw_asm_off,  surface_emis,   &
-                  !         !flag_rtr2,     c_cld_lw_ssa_off,  c_cld_lw_asm_off,  surface_emis,   &
-                  !     ! U-MICH team add output --->
-                  !         flds_spec, fldsc_spec, flns_spec, flnsc_spec, flut_spec, flutc_spec )
-                  !      !!!c_cld_lw_asm,  surface_emis,  ful,  fsul,  fdl, fsdl, lwdn_spec         )
-                  !         lwcf_off(:)=flutc_off(:) - flut_off(:)
-                  !end if 
+                  if (offline_flag) then
+                      call rad_rrtmg_lw( &
+                           lchnk,        ncol,         num_rrtmg_levs,  r_state,                     &
+                       ! U-MICH team replace c_cld_lw_abs with c_cld_lw_ext--->
+                           state%pmid,   aer_lw_abs,   cldfprime,       c_cld_lw_ext_off,            &
+                           qrl_off,          qrlc_off,                                                       &
+                           flns_off,         flnt_off,         flnsc_off,           flntc_off,        flwds_off, &
+                           flut_off,         flutc_off,        fnl_off,             fcnl_off,         fldsc_off,         &
+                           clm_seed,     lu,           ld,                                           &
+                       ! U-MICH team add input --->
+                           .false.,     c_cld_lw_ssa_off,  c_cld_lw_asm_off,  surface_emis,   &
+                           !flag_rtr2,     c_cld_lw_ssa_off,  c_cld_lw_asm_off,  surface_emis,   &
+                       ! U-MICH team add output --->
+                           flds_spec, fldsc_spec, flns_spec, flnsc_spec, flut_spec, flutc_spec )
+                        !!!c_cld_lw_asm,  surface_emis,  ful,  fsul,  fdl, fsdl, lwdn_spec         )
+                           lwcf_off(i)=flutc_off(i) - flut_off(i)
+                  end if 
 
                   call rad_rrtmg_lw( &
                        lchnk,        ncol,         num_rrtmg_levs,  r_state,                     &
@@ -2134,21 +2134,21 @@ end function radiation_nextsw_cday
                      lwcfsfc(i)=flnsc(i) - flns(i)
                   end do
 
-                  !if (offline_flag) then
-                  !    !  Output fluxes at 200 mb
-                  !    ! Dump longwave radiation information to history tape buffer (diagnostics)
-                  !    call outfld('QRL_OFF'//diag(icall),qrl_off (:ncol,:)/cpair,ncol,lchnk)
-                  !    call outfld('QRLC_OFF'//diag(icall),qrlc_off(:ncol,:)/cpair,ncol,lchnk)
-                  !    call outfld('FLNT_OFF'//diag(icall),flnt_off  ,pcols,lchnk)
-                  !    call outfld('FLUT_OFF'//diag(icall),flut_off  ,pcols,lchnk)
-                  !    call outfld('FLUTC_OFF'//diag(icall),flutc_off ,pcols,lchnk)
-                  !    call outfld('FLNTC_OFF'//diag(icall),flntc_off ,pcols,lchnk)
-                  !    call outfld('FLNS_OFF'//diag(icall),flns_off  ,pcols,lchnk)
-                  !    call outfld('FLDSC_OFF'//diag(icall),fldsc_off ,pcols,lchnk)
-                  !    call outfld('FLNSC_OFF'//diag(icall),flnsc_off ,pcols,lchnk)
-                  !    call outfld('LWCF_OFF'//diag(icall),lwcf_off  ,pcols,lchnk)
-                  !    call outfld('FLDS_OFF'//diag(icall),flwds_off ,pcols,lchnk)
-                  !end if
+                  if (offline_flag) then
+                      !  Output fluxes at 200 mb
+                      ! Dump longwave radiation information to history tape buffer (diagnostics)
+                      call outfld('QRL_OFF'//diag(icall),qrl_off (:ncol,:)/cpair,ncol,lchnk)
+                      call outfld('QRLC_OFF'//diag(icall),qrlc_off(:ncol,:)/cpair,ncol,lchnk)
+                      call outfld('FLNT_OFF'//diag(icall),flnt_off  ,pcols,lchnk)
+                      call outfld('FLUT_OFF'//diag(icall),flut_off  ,pcols,lchnk)
+                      call outfld('FLUTC_OFF'//diag(icall),flutc_off ,pcols,lchnk)
+                      call outfld('FLNTC_OFF'//diag(icall),flntc_off ,pcols,lchnk)
+                      call outfld('FLNS_OFF'//diag(icall),flns_off  ,pcols,lchnk)
+                      call outfld('FLDSC_OFF'//diag(icall),fldsc_off ,pcols,lchnk)
+                      call outfld('FLNSC_OFF'//diag(icall),flnsc_off ,pcols,lchnk)
+                      call outfld('LWCF_OFF'//diag(icall),lwcf_off  ,pcols,lchnk)
+                      call outfld('FLDS_OFF'//diag(icall),flwds_off ,pcols,lchnk)
+                  end if
 
                   !  Output fluxes at 200 mb
                   call vertinterp(ncol, pcols, pverp, state%pint, 20000._r8, fnl, fln200)
